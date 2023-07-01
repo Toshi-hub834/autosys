@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitor Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles for progress bars */
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
+    <div class="container mx-auto bg-gray-800 rounded-xl shadow-2xl p-8 max-w-4xl w-full">
+        <h1 class="text-4xl font-extrabold text-center text-blue-400 mb-8">System Health Dashboard</h1>
+
+        <div id="metrics-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- CPU Usage Card -->
+            <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-200 mb-4 flex items-center">
+                    <svg class="w-7 h-7 mr-3 text-green-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                    CPU Usage
+                </h2>
+                <div class="text-3xl font-extrabold text-green-400 mb-4" id="cpu-percent">{{ cpu.percent | default('N/A') }}%</div>
+                <div class="w-full bg-gray-600 rounded-full h-3">
+                    <div id="cpu-progress" class="bg-green-500 h-3 rounded-full progress-bar-fill" style="width: {{ cpu.percent | default(0) }}%;"></div>
+                </div>
+            </div>
+
+            <!-- Memory Usage Card -->
+            <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-200 mb-4 flex items-center">
+                    <svg class="w-7 h-7 mr-3 text-purple-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M7 3a1 1 0 00-1 1v1a1 1 0 002 0V4a1 1 0 00-1-1zM9 3a1 1 0 00-1 1v1a1 1 0 002 0V4a1 1 0 00-1-1zM11 3a1 1 0 00-1 1v1a1 1 0 002 0V4a1 1 0 00-1-1z" /><path fill-rule="evenodd" d="M18 9v6a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2h12a2 2 0 012 2zM4 9h12V7H4a1 1 0 00-1 1v1z" clip-rule="evenodd"></path></svg>
+                    Memory Usage
+                </h2>
+                <div class="text-xl text-purple-400 mb-2">Used: <span id="mem-used">{{ memory.used | default('N/A') }}</span> {{ memory.unit | default('') }}</div>
+                <div class="text-xl text-gray-300 mb-4">Total: <span id="mem-total">{{ memory.total | default('N/A') }}</span> {{ memory.unit | default('') }}</div>
+                <div class="w-full bg-gray-600 rounded-full h-3">
+                    <div id="mem-progress" class="bg-purple-500 h-3 rounded-full progress-bar-fill" style="width: {{ memory.percent | default(0) }}%;"></div>
+                </div>
+                <div class="text-sm text-gray-400 mt-2 text-right" id="mem-percent">{{ memory.percent | default(0) }}%</div>
+            </div>
+
+            <!-- Disk Usage Card -->
+            <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-200 mb-4 flex items-center">
+                    <svg class="w-7 h-7 mr-3 text-orange-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm10 0H4v10h8V5z" clip-rule="evenodd"></path></svg>
+                    Disk Usage ({{ disk.path | default('/') }})
+                </h2>
+                <div class="text-xl text-orange-400 mb-2">Used: <span id="disk-used">{{ disk.used | default('N/A') }}</span> {{ disk.unit | default('') }}</div>
+                <div class="text-xl text-gray-300 mb-4">Total: <span id="disk-total">{{ disk.total | default('N/A') }}</span> {{ disk.unit | default('') }}</div>
+                <div class="w-full bg-gray-600 rounded-full h-3">
+                    <div id="disk-progress" class="bg-orange-500 h-3 rounded-full progress-bar-fill" style="width: {{ disk.percent | default(0) }}%;"></div>
+                </div>
+                <div class="text-sm text-gray-400 mt-2 text-right" id="disk-percent">{{ disk.percent | default(0) }}%</div>
+            </div>
+
+            <!-- Network I/O Card -->
+            <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-200 mb-4 flex items-center">
+                    <svg class="w-7 h-7 mr-3 text-red-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M12 1.586l-4 4V14a2 2 0 002 2h2a2 2 0 002-2V5.586l-4-4zM16 12a4 4 0 100-8 4 4 0 000 8z" clip-rule="evenodd"></path></svg>
+                    Network I/O
+                </h2>
+                <div class="text-xl text-red-400 mb-2">Sent Rate: <span id="net-sent-rate">{{ network.sent_rate_mbps | default('N/A') }}</span> MB/s</div>
+                <div class="text-xl text-red-400 mb-4">Recv Rate: <span id="net-recv-rate">{{ network.recv_rate_mbps | default('N/A') }}</span> MB/s</div>
+                <div class="text-sm text-gray-400 mt-2">Last Updated: <span id="net-timestamp">{{ network.timestamp | default('N/A') }}</span></div>
+            </div>
+        </div>
+
+        <div class="text-center mt-8">
+            <button id="refresh-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
+                Refresh Metrics
+            </button>
+            <div id="loading-indicator" class="mt-4 text-blue-300 hidden">Fetching new data...</div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript for dynamic updates
+        const updateMetrics = async () => {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            loadingIndicator.classList.remove('hidden'); // Show loading indicator
+
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+
+                // Update CPU
+                document.getElementById('cpu-percent').innerText = `${data.cpu.percent}%`;
+                document.getElementById('cpu-progress').style.width = `${data.cpu.percent}%`;
+
+                // Update Memory
+                document.getElementById('mem-used').innerText = data.memory.used;
+                document.getElementById('mem-total').innerText = data.memory.total;
+                document.getElementById('mem-percent').innerText = `${data.memory.percent}%`;
+                document.getElementById('mem-progress').style.width = `${data.memory.percent}%`;
+
+                // Update Disk
+                document.getElementById('disk-used').innerText = data.disk.used;
+                document.getElementById('disk-total').innerText = data.disk.total;
+                document.getElementById('disk-percent').innerText = `${data.disk.percent}%`;
+                document.getElementById('disk-progress').style.width = `${data.disk.percent}%`;
+                // Note: Disk path is static, no need to update
+
+                // Update Network
+                document.getElementById('net-sent-rate').innerText = data.network.sent_rate_mbps;
+                document.getElementById('net-recv-rate').innerText = data.network.recv_rate_mbps;
+                document.getElementById('net-timestamp').innerText = data.network.timestamp;
+
+            } catch (error) {
+                console.error("Failed to fetch metrics:", error);
+                // Optionally display an error message on the dashboard
+            } finally {
+                loadingIndicator.classList.add('hidden'); // Hide loading indicator
+            }
+        };
+
+        // Add event listener to the refresh button
+        document.getElementById('refresh-button').addEventListener('click', updateMetrics);
+
+        // Optional: Auto-refresh every 5 seconds
+        // setInterval(updateMetrics, 5000);
+
+        // Initial load of metrics (if not already rendered by Flask)
+        // This is primarily for when the page loads, ensuring JS updates if initial data is missing
+        document.addEventListener('DOMContentLoaded', () => {
+            // If the initial Flask-rendered data is 'N/A', fetch it via JS
+            if (document.getElementById('cpu-percent').innerText.includes('N/A')) {
+                updateMetrics();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+    "email_to": "admin@example.com",
+    "cpu_alert_threshold": 90,
+    "memory_alert_threshold": 90
+}
